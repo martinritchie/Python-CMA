@@ -29,8 +29,8 @@ class subGraph(nx.Graph):
         self._cornerCounts = self.calcCornerCounts(self._D)
         C = list(self._cornerCounts.values())
         
-        #TODO: corner positions in larger asymmetric subgraphs can not be 
-        #      specified. 
+        # TODO: corner positions in larger asymmetric subgraphs can not be 
+        #       specified. 
         self._cornerDist = [c/sum(C) for c in C]
 
     @property
@@ -101,8 +101,7 @@ class subGraphSequence:
     @property
     def allocated_sequence(self):
         return self._allocated_sequence
-    
-    
+ 
     def _resolvePositions(self, S, cornerDist):
         """For asymmetric subgraphs a node's position matters. This method 
         multinomially resolves this ambiguity.
@@ -124,11 +123,7 @@ class subGraphSequence:
         return np.array([np.random.multinomial(n, cornerDist) for n in S])
 
     def get_corner(self): 
-        corner = np.multiply(s.cornerTypes, self._resolvePositions[self.index])
+        corner = np.multiply(self._subgraph.cornerTypes,
+                             self.resolvedPositions[self.index])
         self.index+=1
         return corner 
-
-
-
-
-# a.flags.writeable = False

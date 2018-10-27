@@ -4,7 +4,7 @@ from subgraphs import subGraphSequence
 from subgraphs import subGraph
 import unittest 
 from scipy import stats 
-
+from CMA import HyperStubAllocation
 def triangle():
     """Three nodes that share every possible connection. 
     """
@@ -67,7 +67,6 @@ class subgraphTests(unittest.TestCase):
     def test_toast_corner_counts(self):
         self.assertEqual(self.toast.cornerCounts, {2:2, 3:2} )
 
-
 class subgraphSequenceTests(unittest.TestCase):
     """Tests the basic functionality of subgraphs.subGraphSequence.
     """
@@ -91,7 +90,7 @@ class subgraphSequenceTests(unittest.TestCase):
         self.assertTrue( (rp==test).all() )
     
     def test_tri_totalstubs(self):
-        ts   = self.Triangle.totalStubs
+        ts   = self.Triangle.requiredStubs
         test =  np.ones((6,), dtype=int)*2
         self.assertTrue( (ts==test).all() )
 
@@ -102,14 +101,52 @@ class subgraphSequenceTests(unittest.TestCase):
         self.assertTrue( 0.01 < p )
 
     def test_toast_totalstubs(self): 
-        ts   = self.Toast.totalStubs
+        ts   = self.Toast.requiredStubs
         twos = np.sum([i for i in ts if i==2])
         thre = np.sum([i for i in ts if i==3])
         _, p = stats.chisquare([twos, thre], [2*5000, 3*5000])
         self.assertTrue( 0.01 < p )
 
+class HyperStubAllocationTests(unittest.TestCase):
+
+    def __init__(self, *args, **kwargs):
+        """
+        """
+        super().__init__(*args, **kwargs)
+
+        self.triangle = triangle()
+        self.toast = toast()
+
+        self.D = np.random.poisson(lam=10, size=(100,))
+        while sum(self.D)%2 != 0:
+            self.D = np.random.poisson(lam=10, size=(100,))
+
+        triangle_sequence = np.ones((100,), dtype=int)
+        triangle_subgraph = triangle()
+        Triangle = subGraphSequence(triangle_sequence, triangle_subgraph)
+        self.HSA = HyperStubAllocation(self.D, [Triangle], [triangle_subgraph])
+        self.bins, self.freq = self.HSA.cumulative_degree_counts(self.D)
+        self.HSA._allocate_subgraphs_to_nodes() 
+
+    def test_cumulative_counts_bins(self): 
+        """HyperStubAllocation.cumulative_degree_counts computes an ascending 
+        cumulate frequency count of node degree. 
+        """
+        self.assertTrue(type(self.bins)==dict)
+    
+    # def test_cumulative_counts_freq(self): 
+    #     """Check for monotonicity of the cumulative counts. 
+    #     """
+    #     # print(self.freq)
+    #     self.assertTrue(all(y<=x for x, y in zip(self.freq, self.freq[1:])))
+
+    # def test_print_bins_freq(self):
 
 
+    #     for k, v in self.bins.items():
+    #         print("Degree: {}, Freq: {}, Nodes: {}. \n ".format(k, self.freq[k]/self.freq[0], v) )
+        
 
+        
 if __name__ == '__main__':
     unittest.main()
